@@ -7,7 +7,7 @@ RUN pecl bundle v8js &&\
     cd v8js &&\
     sed -i -e 's/"c++11"/"c++14"/' config.m4 &&\ 
     phpize &&\
-    ./configure --with-v8js &&\
+    ./configure --with-v8js CPPFLAGS="-DV8_COMPRESS_POINTERS" &&\
     make &&\
     make install
 RUN d=`php-config --extension-dir` && mkdir -p "/dist/$d" && cp "$d/v8js.so" "/dist/$d/"

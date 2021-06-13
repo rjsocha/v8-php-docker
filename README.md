@@ -1,3 +1,6 @@
+I'm not sure if V8 engine embedded in PHP is such good idea. But well...
+
+
 Build files for:
 
  * https://hub.docker.com/r/wyga/v8-lib-buster

@@ -2,7 +2,7 @@ ARG V8V=8.1
 FROM wyga/v8-lib-buster:${V8V} AS V8Lib
 FROM php:7.4-fpm AS ext
 COPY --from=V8Lib / /
-RUN pecl install v8js 
+RUN CPPFLAGS="-DV8_COMPRESS_POINTERS" pecl install v8js 
 RUN d=`php-config --extension-dir` && mkdir -p "/dist/$d" && cp "$d/v8js.so" "/dist/$d/"
 FROM scratch
 COPY --from=V8Lib / /

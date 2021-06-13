@@ -1,0 +1,4 @@
+FROM wyga/v8-php-7.4-ext-buster:8.8 AS ext
+FROM php:7.4-apache
+COPY --from=ext / /
+RUN docker-php-ext-enable v8js
