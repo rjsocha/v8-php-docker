@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+trap _error ERR 
+_error() {
+	echo "Build failed!"
+	exit 1
+}
+for _tag in 8.1 8.2 8.3 8.4 8.5 8.6 
+do
+	docker build  -t wyga/v8-php-7.4-ext-buster:${_tag} --build-arg V8V=${_tag} -f Dockerfile.pecl  .
+done
+
+for _tag in 8.7 8.8
+do
+	docker build  -t wyga/v8-php-7.4-ext-buster:${_tag} --build-arg V8V=${_tag} -f Dockerfile.pecl.custom  .
+done
+
+for _tag in 8.1 8.2 8.3 8.4 8.5 8.6 8.7 8.8
+do
+	docker push wyga/v8-php-7.4-ext-buster:${_tag} 
+done

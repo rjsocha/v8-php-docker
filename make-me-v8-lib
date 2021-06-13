@@ -1,0 +1,15 @@
+#!/bin/bash
+_repo="wyga/v8-lib-buster"
+# Only this version conmpile cleanly...
+for _b in 8.1 8.2 8.3 8.4 8.5 8.6 8.7 8.8
+do
+	docker build --build-arg branch="${_b}" -t "wyga/v8-lib-buster:${_b}" -f Dockerfile.v8.branch . 2>&1 | tee "${_b}.log"
+	[[ $? -ne 0 ]] && continue
+	_full=$(grep -o -P "(?<=(Version ))${_b}[0-9.]+" "${_b}.log")
+	if [[ -n $_full ]]
+	then
+		docker tag "wyga/v8-lib-buster:${_b}" "wyga/v8-lib-buster:${_full}"
+		[[ "$1" == "push" ]] && docker push "wyga/v8-lib-buster:${_full}"
+	fi
+	[[ "$1" == "push" ]] && docker push "wyga/v8-lib-buster:${_b}"
+done

@@ -1,0 +1,41 @@
+FROM debian:buster as V8
+
+RUN true &&\
+    apt-get update -qq &&\
+    DEBIAN_FRONTEND=noninteractive apt-get -qq dist-upgrade &&\
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install git curl build-essential python3 python lsb-release sudo
+
+WORKDIR /
+
+RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+ENV PATH=/depot_tools:$PATH
+
+RUN true &&\
+    mkdir /v8build &&\
+    cd /v8build &&\
+    fetch v8
+
+WORKDIR /v8build/v8
+ARG branch=8.0
+# git branch --remotes | grep branch-heads/
+RUN git checkout branch-heads/${branch} && gclient sync
+
+RUN ./build/install-build-deps.sh --no-arm --no-backwards-compatible
+
+RUN ./tools/dev/v8gen.py -vvv x64.release -- is_component_build=true v8_enable_backtrace=true v8_enable_disassembler=true v8_enable_object_print=true use_custom_libcxx=false is_clang=false
+
+#RUN autoninja -C out.gn/x64.release unittests cctest inspector-test d8 wasm_api_tests
+RUN autoninja -C out.gn/x64.release d8
+
+# errors
+# RUN ./tools/run-tests.py --outdir=out.gn/x64.release debugger intl mjsunit cctest message unittests
+
+RUN echo DONE
+
+RUN mkdir -p /dist/usr/local/lib &&\
+   cp -r /v8build/v8/include /dist/usr/local/ &&\
+   for _f in libv8.so libv8_libbase.so libicui18n.so libicuuc.so libchrome_zlib.so libv8_libplatform.so icudtl.dat *_blob.bin; do \
+   cp /v8build/v8/out.gn/x64.release/$_f /dist/usr/local/lib/ || exit 10; done
+
+FROM scratch
+COPY --from=V8 /dist/ /

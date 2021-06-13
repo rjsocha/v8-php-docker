@@ -1,0 +1,16 @@
+ARG V8V=8.7
+FROM wyga/v8-lib-buster:${V8V} AS V8Lib
+FROM php:7.4-fpm AS ext
+COPY --from=V8Lib / /
+# dirty hack
+RUN pecl bundle v8js &&\
+    cd v8js &&\
+    sed -i -e 's/"c++11"/"c++14"/' config.m4 &&\ 
+    phpize &&\
+    ./configure --with-v8js &&\
+    make &&\
+    make install
+RUN d=`php-config --extension-dir` && mkdir -p "/dist/$d" && cp "$d/v8js.so" "/dist/$d/"
+FROM scratch
+COPY --from=V8Lib / /
+COPY --from=ext /dist/ /
